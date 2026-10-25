@@ -3,16 +3,11 @@ import {
     collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from './firebase-config.js';
+import { ADMIN_UID } from './config-admin.js';
 
 // ============================================================
 // CONFIGURAÇÃO
 // ============================================================
-
-// Depois de criar a SUA conta no site, copie o UID dela no console do Firebase
-// (Authentication > Users) e cole aqui. Cole o mesmo UID nas regras do Firestore.
-// É as regras do Firestore que realmente protegem os dados; esta constante só
-// decide quais botões aparecem na tela.
-const ADMIN_UID = "CGOkgSs602YCTOALsGSocXtYdJr2";
 
 // O Firebase só aceita login com e-mail. Para o usuário digitar apenas o nome,
 // o site monta um e-mail interno (usuario@agenda-escolar.app). Ele não precisa existir.
@@ -41,6 +36,15 @@ const materias = [
 // então limitamos o texto final em vez do tamanho do arquivo original.
 const LIMITE_IMAGEM_CHARS = 700000;
 
+// Grupos da lista, do mais urgente para o mais distante.
+const GRUPOS = [
+    { chave: 'atrasadas', titulo: 'Atrasadas', testa: (d) => d < 0 },
+    { chave: 'hoje', titulo: 'Hoje', testa: (d) => d === 0 },
+    { chave: 'amanha', titulo: 'Amanhã', testa: (d) => d === 1 },
+    { chave: 'semana', titulo: 'Esta semana', testa: (d) => d >= 2 && d <= 7 },
+    { chave: 'depois', titulo: 'Mais para frente', testa: (d) => d > 7 }
+];
+
 // ============================================================
 // ELEMENTOS DA PÁGINA
 // ============================================================
@@ -52,6 +56,7 @@ const form = document.getElementById('form-atividade');
 const selectMateria = document.getElementById('materia');
 const listaAtividades = document.getElementById('lista-atividades');
 const btnTema = document.getElementById('btn-tema');
+const metaTema = document.getElementById('meta-tema');
 
 const telaLogin = document.getElementById('tela-login');
 const formLogin = document.getElementById('form-login');
@@ -64,24 +69,68 @@ const areaApp = document.getElementById('area-app');
 const spanUsuario = document.getElementById('usuario-logado');
 const btnSair = document.getElementById('btn-sair');
 
-// ============================================================
-// TEMA (CLARO/ESCURO)
-// ============================================================
-try {
-    if (localStorage.getItem('tema') === 'escuro') {
-        document.body.classList.add('dark-mode');
-        btnTema.textContent = '☀️ Claro';
-    }
-} catch (e) { /* sem localStorage, segue sem lembrar o tema */ }
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = lightbox.querySelector('img');
 
-btnTema.onclick = () => {
-    document.body.classList.toggle('dark-mode');
-    const escuro = document.body.classList.contains('dark-mode');
-    btnTema.textContent = escuro ? '☀️ Claro' : '🌙 Escuro';
-    try {
-        localStorage.setItem('tema', escuro ? 'escuro' : 'claro');
-    } catch (e) { /* ignora */ }
-};
+// ============================================================
+// AUXILIARES (criar elementos e ícones)
+// ============================================================
+const NS_SVG = 'http://www.w3.org/2000/svg';
+
+function criar(tag, classe, texto) {
+    const el = document.createElement(tag);
+    if (classe) el.className = classe;
+    if (texto !== undefined) el.textContent = texto; // textContent: nada digitado vira HTML/código
+    return el;
+}
+
+function icone(nome) {
+    const svg = document.createElementNS(NS_SVG, 'svg');
+    svg.setAttribute('class', 'icone');
+    svg.setAttribute('aria-hidden', 'true');
+    const uso = document.createElementNS(NS_SVG, 'use');
+    uso.setAttribute('href', `#i-${nome}`);
+    svg.appendChild(uso);
+    return svg;
+}
+
+function trocarIcone(botao, nome) {
+    botao.querySelector('use').setAttribute('href', `#i-${nome}`);
+}
+
+function botaoIcone(nomeIcone, rotulo, classesExtra, aoClicar) {
+    const botao = criar('button', `btn-icone pequeno ${classesExtra || ''}`.trim());
+    botao.type = 'button';
+    botao.setAttribute('aria-label', rotulo);
+    botao.title = rotulo;
+    botao.appendChild(icone(nomeIcone));
+    botao.addEventListener('click', aoClicar);
+    return botao;
+}
+
+// ============================================================
+// TEMA (CLARO/ESCURO) - começa pelo tema do aparelho
+// ============================================================
+function aplicarTema(escuro) {
+    document.body.classList.toggle('dark-mode', escuro);
+    trocarIcone(btnTema, escuro ? 'sol' : 'lua');
+    btnTema.setAttribute('aria-label', escuro ? 'Usar tema claro' : 'Usar tema escuro');
+    metaTema.setAttribute('content', escuro ? '#0E1120' : '#F2F4FA');
+}
+
+let temaSalvo = null;
+try { temaSalvo = localStorage.getItem('tema'); } catch (e) { /* sem localStorage */ }
+aplicarTema(
+    temaSalvo
+        ? temaSalvo === 'escuro'
+        : window.matchMedia('(prefers-color-scheme: dark)').matches
+);
+
+btnTema.addEventListener('click', () => {
+    const escuro = !document.body.classList.contains('dark-mode');
+    aplicarTema(escuro);
+    try { localStorage.setItem('tema', escuro ? 'escuro' : 'claro'); } catch (e) { /* ignora */ }
+});
 
 // ============================================================
 // LOGIN COM NOME DE USUÁRIO + SENHA
@@ -170,23 +219,80 @@ function abrirModal(atividade) {
         document.getElementById('descricao').value = atividade.descricao || '';
     }
     modal.classList.remove('oculto');
+    document.body.classList.add('sem-rolagem');
 }
 
 function fecharModal() {
     modal.classList.add('oculto');
+    document.body.classList.remove('sem-rolagem');
     form.reset();
     editandoId = null;
     modalTitulo.textContent = 'Adicionar Atividade';
 }
 
-btnNova.onclick = () => abrirModal(null);
-btnFechar.onclick = fecharModal;
+btnNova.addEventListener('click', () => abrirModal(null));
+btnFechar.addEventListener('click', fecharModal);
 modal.addEventListener('click', (e) => {
     if (e.target === modal) fecharModal();
 });
+
+// ============================================================
+// IMAGEM AMPLIADA
+// ============================================================
+function abrirImagem(src, alt) {
+    lightboxImg.src = src;
+    lightboxImg.alt = alt;
+    lightbox.hidden = false;
+}
+
+function fecharImagem() {
+    lightbox.hidden = true;
+    lightboxImg.removeAttribute('src');
+}
+
+lightbox.addEventListener('click', fecharImagem);
+
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modal.classList.contains('oculto')) fecharModal();
+    if (e.key !== 'Escape') return;
+    if (!lightbox.hidden) fecharImagem();
+    else if (!modal.classList.contains('oculto')) fecharModal();
 });
+
+// ============================================================
+// DATAS E CORES
+// ============================================================
+function diasAte(prazo) {
+    if (!prazo) return Infinity;
+    const [ano, mes, dia] = prazo.split('-').map(Number);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    return Math.round((new Date(ano, mes - 1, dia) - hoje) / 86400000);
+}
+
+function dataLocal(prazo) {
+    const [ano, mes, dia] = prazo.split('-').map(Number);
+    return new Date(ano, mes - 1, dia);
+}
+
+function textoSituacao(dias) {
+    if (dias === Infinity) return 'Sem prazo';
+    if (dias < 0) return dias === -1 ? 'Venceu ontem' : `Venceu há ${-dias} dias`;
+    if (dias === 0) return 'Vence hoje';
+    if (dias === 1) return 'Vence amanhã';
+    return `Em ${dias} dias`;
+}
+
+function classeUrgencia(dias) {
+    if (dias < 0) return 'urgencia-atrasada';
+    if (dias === 0) return 'urgencia-hoje';
+    if (dias === 1) return 'urgencia-amanha';
+    return 'urgencia-futura';
+}
+
+// Cada matéria ganha sua própria cor (distribuída pelo círculo de cores).
+function corDaMateria(id) {
+    return `hsl(${Math.round((Number(id) * 137.508) % 360)} 62% 46%)`;
+}
 
 // ============================================================
 // ATIVIDADES: cache + tempo real
@@ -194,6 +300,7 @@ document.addEventListener('keydown', (e) => {
 let atividades = [];
 let ehAdmin = false;
 let cancelarEscuta = null;
+let jaDesenhou = false; // a animação de entrada só acontece na primeira vez
 
 function lerCache() {
     try {
@@ -225,20 +332,82 @@ function escutarAtividades() {
     }, (erro) => {
         console.error("Erro no Firebase: ", erro);
         listaAtividades.replaceChildren(
-            criar('p', '', 'Não foi possível carregar as atividades. Entre de novo ou verifique a conexão.')
+            criar('p', 'vazio', 'Não foi possível carregar as atividades. Entre de novo ou verifique a conexão.')
         );
     });
 }
 
-function criar(tag, classe, texto) {
-    const el = document.createElement(tag);
-    if (classe) el.className = classe;
-    if (texto !== undefined) el.textContent = texto; // textContent: nada digitado vira HTML/código
-    return el;
+function estadoVazio() {
+    const caixa = criar('div', 'vazio');
+    caixa.appendChild(icone('calendario-ok'));
+    caixa.appendChild(criar('h2', '', 'Nada pendente'));
+    caixa.appendChild(criar('p', '', ehAdmin
+        ? 'Toque em "+" para adicionar a primeira atividade.'
+        : 'Quando houver atividades, elas aparecem aqui.'));
+    return caixa;
 }
 
-function formatarData(prazo) {
-    return prazo ? prazo.split('-').reverse().join('/') : '-';
+function criarCartao(ativ, indice, animar) {
+    const mat = materias.find(m => m.id == ativ.materiaId) || { nome: "Desconhecida", professor: "-" };
+    const dias = diasAte(ativ.prazo);
+
+    const card = criar('article', `tarefa ${classeUrgencia(dias)}`);
+    card.style.setProperty('--materia', corDaMateria(ativ.materiaId));
+    if (animar) {
+        card.classList.add('entrada');
+        card.style.setProperty('--i', Math.min(indice, 8));
+    }
+
+    // Bloco da data (dia da semana, dia, mês)
+    const bloco = criar('div', 'tarefa-data');
+    if (ativ.prazo) {
+        const data = dataLocal(ativ.prazo);
+        const semana = data.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+        const mes = data.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+        bloco.appendChild(criar('span', 'semana', semana));
+        bloco.appendChild(criar('span', 'dia', String(data.getDate())));
+        bloco.appendChild(criar('span', 'mes', mes));
+    } else {
+        bloco.appendChild(criar('span', 'dia', '-'));
+    }
+    card.appendChild(bloco);
+
+    // Corpo do cartão
+    const corpo = criar('div', 'tarefa-corpo');
+
+    const topo = criar('div', 'tarefa-topo');
+    topo.appendChild(criar('span', 'chip-materia', mat.nome));
+    topo.appendChild(criar('span', 'situacao', textoSituacao(dias)));
+    corpo.appendChild(topo);
+
+    corpo.appendChild(criar('h3', '', ativ.titulo));
+
+    const professor = criar('p', 'professor');
+    professor.appendChild(icone('usuario'));
+    professor.appendChild(document.createTextNode(mat.professor));
+    corpo.appendChild(professor);
+
+    if (ativ.descricao) corpo.appendChild(criar('p', 'descricao', ativ.descricao));
+
+    if (ativ.imagem && ativ.imagem.startsWith('data:image/')) {
+        const img = criar('img', 'tarefa-img');
+        img.src = ativ.imagem;
+        img.alt = `Imagem da atividade ${ativ.titulo}`;
+        img.loading = 'lazy';
+        img.addEventListener('click', () => abrirImagem(ativ.imagem, img.alt));
+        corpo.appendChild(img);
+    }
+
+    // Só o admin vê os botões de gerenciar. Os amigos só visualizam.
+    if (ehAdmin) {
+        const acoes = criar('div', 'tarefa-acoes');
+        acoes.appendChild(botaoIcone('lapis', 'Editar atividade', '', () => abrirModal(ativ)));
+        acoes.appendChild(botaoIcone('lixeira', 'Excluir atividade', 'perigo', () => deletarAtividade(ativ.id)));
+        corpo.appendChild(acoes);
+    }
+
+    card.appendChild(corpo);
+    return card;
 }
 
 function renderizarAtividades() {
@@ -246,47 +415,28 @@ function renderizarAtividades() {
     atividades.sort((a, b) => (a.prazo || '').localeCompare(b.prazo || ''));
 
     if (atividades.length === 0) {
-        listaAtividades.appendChild(
-            criar('p', '', ehAdmin
-                ? 'Nenhuma atividade ainda. Toque em "+ Nova Atividade" para começar.'
-                : 'Nenhuma atividade por enquanto.')
-        );
+        listaAtividades.appendChild(estadoVazio());
         return;
     }
 
-    atividades.forEach(ativ => {
-        const mat = materias.find(m => m.id == ativ.materiaId) || { nome: "Desconhecida", professor: "-" };
+    const animar = !jaDesenhou;
+    let indice = 0;
 
-        const card = criar('div', 'card');
-        card.appendChild(criar('h3', '', ativ.titulo));
-        card.appendChild(criar('div', 'materia-info', `${mat.nome} - ${mat.professor}`));
-        card.appendChild(criar('div', 'prazo', `Prazo: ${formatarData(ativ.prazo)}`));
-        if (ativ.descricao) card.appendChild(criar('p', '', ativ.descricao));
+    GRUPOS.forEach(grupo => {
+        const itens = atividades.filter(a => grupo.testa(diasAte(a.prazo)));
+        if (itens.length === 0) return;
 
-        if (ativ.imagem && ativ.imagem.startsWith('data:image/')) {
-            const img = criar('img');
-            img.src = ativ.imagem;
-            img.alt = 'Anexo';
-            card.appendChild(img);
-        }
+        const secao = criar('section', `grupo grupo-${grupo.chave}`);
+        const cabecalho = criar('div', 'grupo-cab');
+        cabecalho.appendChild(criar('h2', '', grupo.titulo));
+        cabecalho.appendChild(criar('span', 'contagem', String(itens.length)));
+        secao.appendChild(cabecalho);
 
-        // Só o admin vê os botões de gerenciar. Os amigos só visualizam.
-        if (ehAdmin) {
-            const acoes = criar('div', 'card-acoes');
-
-            const btnEditar = criar('button', 'btn-editar', 'Editar');
-            btnEditar.addEventListener('click', () => abrirModal(ativ));
-            acoes.appendChild(btnEditar);
-
-            const btnExcluir = criar('button', 'btn-excluir', 'Excluir');
-            btnExcluir.addEventListener('click', () => deletarAtividade(ativ.id));
-            acoes.appendChild(btnExcluir);
-
-            card.appendChild(acoes);
-        }
-
-        listaAtividades.appendChild(card);
+        itens.forEach(ativ => secao.appendChild(criarCartao(ativ, indice++, animar)));
+        listaAtividades.appendChild(secao);
     });
+
+    jaDesenhou = true;
 }
 
 async function deletarAtividade(id) {
@@ -337,7 +487,7 @@ function comprimirImagem(arquivo, larguraMax = 900) {
 // ============================================================
 // SALVAR (nova ou editada)
 // ============================================================
-form.onsubmit = async function (e) {
+form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btnSalvar = document.querySelector('.btn-salvar');
     btnSalvar.disabled = true;
@@ -370,11 +520,17 @@ form.onsubmit = async function (e) {
         btnSalvar.disabled = false;
         btnSalvar.textContent = "Salvar Atividade";
     }
-};
+});
 
 // ============================================================
 // QUEM ESTÁ LOGADO DECIDE O QUE APARECE
 // ============================================================
+function mostrarUsuario(nome, admin) {
+    spanUsuario.replaceChildren(criar('span', 'usuario-nome', nome));
+    if (admin) spanUsuario.appendChild(criar('span', 'selo-admin', 'admin'));
+    spanUsuario.hidden = false;
+}
+
 onAuthStateChanged(auth, (user) => {
     if (cancelarEscuta) {
         cancelarEscuta();
@@ -385,6 +541,7 @@ onAuthStateChanged(auth, (user) => {
         // Deslogado: esconde tudo e mostra o login.
         ehAdmin = false;
         atividades = [];
+        jaDesenhou = false;
         limparCache();
         listaAtividades.replaceChildren();
         areaApp.hidden = true;
@@ -397,19 +554,21 @@ onAuthStateChanged(auth, (user) => {
     }
 
     ehAdmin = user.uid === ADMIN_UID;
-    console.log("UID logado:", user.uid);
-    console.log("ADMIN_UID no código:", ADMIN_UID);
-    console.log("É admin?", ehAdmin);
+    if (ADMIN_UID === "COLE_AQUI_O_UID_DO_ADMIN") {
+        console.warn("Cole o UID do admin no arquivo config-admin.js.");
+    }
 
     telaLogin.hidden = true;
     areaApp.hidden = false;
     btnSair.hidden = false;
     btnNova.hidden = !ehAdmin;
-    spanUsuario.hidden = false;
-    spanUsuario.textContent = `${user.email.split('@')[0]}${ehAdmin ? ' (admin)' : ''}`;
+    mostrarUsuario(user.email.split('@')[0], ehAdmin);
 
-    // Mostra o cache na hora e depois o Firebase atualiza em tempo real.
+    // Mostra o cache na hora (sem animar) e depois o Firebase atualiza em tempo real.
     atividades = lerCache();
-    if (atividades.length > 0) renderizarAtividades();
+    if (atividades.length > 0) {
+        jaDesenhou = true; // antes de desenhar, para o cache não animar
+        renderizarAtividades();
+    }
     cancelarEscuta = escutarAtividades();
 });

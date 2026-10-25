@@ -1,129 +1,583 @@
-/* Variáveis de cores (Modo Claro Padrão) */
+/* ==========================================================
+   Agenda Escolar - visual mobile-first
+   Títulos: Bricolage Grotesque | Texto: Figtree
+   Tema escuro: classe .dark-mode no <body> (o app.js liga/desliga)
+   ========================================================== */
+
 :root {
-    --primary: #4a90e2;
-    --background: #f4f7f6;
-    --text: #333;
-    --card-bg: #fff;
-    --border: #ddd;
-    --modal-bg: #fff;
+    --fonte-titulo: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+    --fonte-texto: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    --raio-m: 14px;
+    --raio-g: 22px;
+
+    /* Tema claro */
+    --bg: #F2F4FA;
+    --surface: #FFFFFF;
+    --surface-2: #E8ECF8;
+    --ink: #181C33;
+    --ink-soft: #5B6286;
+    --line: #DCE1F2;
+
+    --accent: #3050F8;
+    --accent-ink: #FFFFFF;
+    --accent-texto: #2339C9;
+    --accent-suave: rgba(48, 80, 248, 0.12);
+    --foco-suave: rgba(48, 80, 248, 0.18);
+
+    --perigo: #D33A45;
+    --perigo-suave: rgba(211, 58, 69, 0.12);
+    --aviso: #A85F00;
+    --aviso-suave: rgba(240, 160, 20, 0.2);
+
+    --sombra: 0 1px 2px rgba(24, 28, 51, 0.06), 0 8px 20px -12px rgba(24, 28, 51, 0.18);
 }
 
-/* Variáveis de cores (Modo Escuro) */
 body.dark-mode {
-    --primary: #5fa5f9;
-    --background: #121212;
-    --text: #e0e0e0;
-    --card-bg: #1e1e1e;
-    --border: #333;
-    --modal-bg: #2d2d2d;
+    --bg: #0E1120;
+    --surface: #171B30;
+    --surface-2: #222845;
+    --ink: #EDEFFB;
+    --ink-soft: #9AA2C8;
+    --line: #2B3253;
+
+    --accent: #7E96FF;
+    --accent-ink: #0E1120;
+    --accent-texto: #9FB1FF;
+    --accent-suave: rgba(126, 150, 255, 0.16);
+    --foco-suave: rgba(126, 150, 255, 0.25);
+
+    --perigo: #FF6B75;
+    --perigo-suave: rgba(255, 107, 117, 0.15);
+    --aviso: #FFB547;
+    --aviso-suave: rgba(255, 181, 71, 0.16);
+
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 24px -14px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+/* ---------- Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
 
-body { background-color: var(--background); color: var(--text); padding: 20px; transition: background 0.3s, color 0.3s; }
+html { -webkit-text-size-adjust: 100%; }
 
-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
-.header-botoes { display: flex; gap: 10px; }
-
-button { background-color: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-button:hover { filter: brightness(0.9); }
-
-#btn-tema { background-color: transparent; border: 1px solid var(--text); color: var(--text); }
-
-.grid-atividades { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-
-.card { background: var(--card-bg); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid var(--border); }
-.card h3 { margin-bottom: 5px; color: var(--primary); }
-.card .materia-info { font-size: 0.9em; opacity: 0.8; margin-bottom: 10px; font-weight: bold; }
-.card .prazo { color: #d9534f; font-weight: bold; margin-bottom: 10px; }
-.card img { max-width: 100%; border-radius: 5px; margin-top: 10px; }
-
-.btn-excluir { background-color: #d9534f; width: 100%; margin-top: 15px; }
-
-/* Modal */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; }
-.modal.oculto { display: none; }
-.modal-conteudo { background: var(--modal-bg); color: var(--text); padding: 20px; border-radius: 8px; width: 100%; max-width: 400px; position: relative; }
-.fechar { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
-
-form { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-input, select, textarea { padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--background); color: var(--text); }
-/* Cole este bloco no FINAL do seu style.css */
-
-/* Faz o atributo "hidden" funcionar mesmo em elementos com display:flex/grid */
-[hidden] {
-    display: none !important;
+body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--fonte-texto);
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.25s ease, color 0.25s ease;
 }
+
+body.sem-rolagem { overflow: hidden; }
+
+[hidden], .oculto { display: none !important; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.icone {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ---------- Barra superior ---------- */
+.barra {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: calc(10px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+}
+
+.marca { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+.marca h1 {
+    margin: 0;
+    font-family: var(--fonte-titulo);
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+.marca-icone {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: var(--accent);
+    color: var(--accent-ink);
+}
+
+.marca-icone.grande { width: 56px; height: 56px; border-radius: 18px; }
+.marca-icone.grande .icone { width: 28px; height: 28px; }
+
+.barra-acoes { display: flex; align-items: center; gap: 4px; min-width: 0; }
 
 .usuario-logado {
-    font-size: 0.9em;
-    opacity: 0.85;
-    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 150px;
+    margin-right: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-soft);
 }
 
-/* Tela de login: usa transparências para funcionar no tema claro e no escuro */
-.tela-login {
-    max-width: 360px;
-    margin: 40px auto;
-    padding: 24px;
-    border: 1px solid rgba(128, 128, 128, 0.35);
-    border-radius: 12px;
-    background: rgba(128, 128, 128, 0.08);
+.usuario-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.selo-admin {
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: var(--accent-suave);
+    color: var(--accent-texto);
+    font-size: 0.72rem;
+    font-weight: 700;
 }
 
-.tela-login h2 {
-    margin-top: 0;
+/* ---------- Botões ---------- */
+.btn-icone {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--ink-soft);
+    transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 
-.tela-login label {
+.btn-icone:active { transform: scale(0.9); }
+.btn-icone.pequeno { width: 40px; height: 40px; border-radius: 12px; }
+
+@media (hover: hover) {
+    .btn-icone:hover { background: var(--surface-2); color: var(--ink); }
+    .btn-icone.perigo:hover { background: var(--perigo-suave); color: var(--perigo); }
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 50px;
+    padding: 0 20px;
+    border: 1.5px solid transparent;
+    border-radius: var(--raio-m);
+    font-weight: 700;
+    transition: transform 0.1s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+.btn-primario { background: var(--accent); color: var(--accent-ink); }
+.btn-secundario { background: transparent; border-color: var(--line); color: var(--ink); }
+.btn-bloco { width: 100%; margin-top: 24px; }
+
+@media (hover: hover) {
+    .btn-primario:hover { filter: brightness(1.08); }
+    .btn-secundario:hover { background: var(--surface-2); }
+}
+
+/* Botão flutuante (admin) */
+.fab {
+    position: fixed;
+    right: max(18px, env(safe-area-inset-right));
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 58px;
+    padding: 0 22px 0 16px;
+    border: 0;
+    border-radius: 20px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 700;
+    box-shadow: 0 12px 24px -8px color-mix(in srgb, var(--accent) 60%, transparent), 0 2px 6px rgba(0, 0, 0, 0.18);
+    transition: transform 0.12s ease;
+}
+
+.fab .icone { width: 24px; height: 24px; stroke-width: 2.4; }
+.fab:active { transform: scale(0.94); }
+
+@media (max-width: 520px) {
+    .fab { width: 58px; padding: 0; justify-content: center; }
+    .fab span { display: none; }
+}
+
+/* ---------- Formulários (login e modal) ---------- */
+label {
     display: block;
-    margin-top: 14px;
+    margin: 18px 0 6px;
+    font-size: 0.88rem;
     font-weight: 600;
 }
 
-.tela-login input {
+input[type="text"],
+input[type="password"],
+input[type="date"],
+select,
+textarea {
     width: 100%;
-    box-sizing: border-box;
-    margin-top: 6px;
-    padding: 10px;
-    font-size: 1em;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--raio-m);
+    background: var(--surface);
+    color: var(--ink);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.login-dica {
-    display: block;
-    margin-top: 4px;
-    font-size: 0.8em;
-    opacity: 0.7;
+textarea { min-height: 104px; resize: vertical; }
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--foco-suave);
 }
+
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 1.5px dashed var(--line);
+    border-radius: var(--raio-m);
+    background: var(--surface-2);
+    color: var(--ink-soft);
+}
+
+input[type="file"]::file-selector-button {
+    margin-right: 12px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ---------- Login ---------- */
+.tela-login {
+    display: grid;
+    place-items: center;
+    min-height: calc(100dvh - 70px);
+    padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+}
+
+.login-cartao {
+    width: 100%;
+    max-width: 380px;
+    padding: 28px 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--raio-g);
+    box-shadow: var(--sombra);
+}
+
+.login-cartao h2 {
+    margin: 18px 0 4px;
+    font-family: var(--fonte-titulo);
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.login-sub { margin: 0; color: var(--ink-soft); }
+.login-dica { display: block; margin-top: 6px; font-size: 0.8rem; color: var(--ink-soft); }
 
 .login-msg {
     min-height: 1.3em;
     margin: 14px 0 0;
-    color: #d64545;
-    font-size: 0.9em;
+    color: var(--perigo);
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
-.login-botoes {
+.login-botoes { display: grid; gap: 10px; margin-top: 14px; }
+
+/* ---------- Lista de atividades ---------- */
+main {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 20px max(16px, env(safe-area-inset-right)) calc(112px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+.lista { display: flex; flex-direction: column; gap: 30px; }
+
+.grupo { display: flex; flex-direction: column; gap: 10px; }
+
+.grupo-cab { display: flex; align-items: center; gap: 10px; padding: 0 4px; }
+
+.grupo-cab h2 {
+    margin: 0;
+    font-family: var(--fonte-titulo);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.grupo-atrasadas .grupo-cab h2 { color: var(--perigo); }
+
+.contagem {
+    min-width: 24px;
+    padding: 1px 8px;
+    border-radius: 99px;
+    background: var(--surface-2);
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Cartão da atividade: a faixa lateral é a cor da matéria; o bloco da data mostra a urgência */
+.tarefa {
+    position: relative;
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px 14px 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--raio-g);
+    box-shadow: var(--sombra);
+    overflow: hidden;
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.tarefa::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: var(--materia, var(--accent));
+}
+
+.tarefa-data {
     display: flex;
-    gap: 8px;
-    margin-top: 12px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 76px;
+    border-radius: 16px;
+    background: var(--surface-2);
+    color: var(--ink);
+    line-height: 1;
+    text-align: center;
 }
 
-.login-botoes button {
-    flex: 1;
-    padding: 10px;
-    font-size: 1em;
-    cursor: pointer;
+.tarefa-data .semana { font-size: 0.72rem; font-weight: 600; opacity: 0.75; }
+
+.tarefa-data .dia {
+    margin: 4px 0 3px;
+    font-family: var(--fonte-titulo);
+    font-size: 1.75rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
 }
 
-/* Botões de Editar/Excluir nos cards (só o admin vê) */
-.card-acoes {
+.tarefa-data .mes { font-size: 0.72rem; font-weight: 600; opacity: 0.75; }
+
+.urgencia-atrasada .tarefa-data { background: var(--perigo-suave); color: var(--perigo); }
+.urgencia-hoje .tarefa-data { background: var(--accent); color: var(--accent-ink); }
+.urgencia-amanha .tarefa-data { background: var(--aviso-suave); color: var(--aviso); }
+
+.tarefa-corpo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.tarefa-topo { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; }
+
+.chip-materia {
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: color-mix(in srgb, var(--materia, var(--accent)) 16%, transparent);
+    color: color-mix(in srgb, var(--materia, var(--accent)) 70%, var(--ink));
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.situacao { font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); }
+.urgencia-atrasada .situacao { color: var(--perigo); }
+.urgencia-hoje .situacao { color: var(--accent-texto); }
+.urgencia-amanha .situacao { color: var(--aviso); }
+
+.tarefa h3 {
+    margin: 0;
+    font-family: var(--fonte-titulo);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.professor {
     display: flex;
-    gap: 8px;
-    margin-top: 10px;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
 }
 
-.btn-editar {
-    padding: 6px 12px;
-    cursor: pointer;
+.professor .icone { width: 15px; height: 15px; }
+
+.descricao {
+    margin: 2px 0 0;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.tarefa-img {
+    display: block;
+    width: 100%;
+    max-height: 240px;
+    margin-top: 6px;
+    object-fit: cover;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface-2);
+    cursor: zoom-in;
+}
+
+.tarefa-acoes { display: flex; justify-content: flex-end; gap: 4px; margin: 2px -6px -6px 0; }
+
+/* Entrada da lista: acontece uma única vez, no primeiro carregamento */
+@keyframes entrar {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+}
+
+.tarefa.entrada {
+    animation: entrar 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+/* Lista vazia */
+.vazio { padding: 64px 16px; text-align: center; color: var(--ink-soft); }
+.vazio .icone { width: 52px; height: 52px; margin-bottom: 14px; opacity: 0.6; }
+
+.vazio h2 {
+    margin: 0 0 6px;
+    font-family: var(--fonte-titulo);
+    font-size: 1.25rem;
+    color: var(--ink);
+}
+
+.vazio p { margin: 0; }
+
+/* ---------- Modal (sheet no celular, janela no computador) ---------- */
+@keyframes esmaecer { from { opacity: 0; } to { opacity: 1; } }
+@keyframes subir { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: none; } }
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(10, 12, 28, 0.55);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    animation: esmaecer 0.2s ease both;
+}
+
+.modal-conteudo {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    max-height: 94dvh;
+    overflow-y: auto;
+    padding: 22px 20px calc(24px + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-radius: 26px 26px 0 0;
+    animation: subir 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.modal-conteudo::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: -8px auto 14px;
+    border-radius: 99px;
+    background: var(--line);
+}
+
+.modal-conteudo h2 {
+    margin: 0;
+    padding-right: 48px;
+    font-family: var(--fonte-titulo);
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.fechar { position: absolute; top: 14px; right: 12px; }
+
+@media (min-width: 640px) {
+    .modal { align-items: center; padding: 24px; }
+    .modal-conteudo { border-radius: 26px; max-height: 90dvh; }
+    .modal-conteudo::before { display: none; }
+}
+
+/* ---------- Imagem ampliada ---------- */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgba(6, 8, 20, 0.9);
+    cursor: zoom-out;
+    animation: esmaecer 0.2s ease both;
+}
+
+.lightbox img { max-width: 100%; max-height: 100%; border-radius: 12px; }
+
+.lightbox-fechar {
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top));
+    right: 12px;
+    color: #fff;
+}
+
+/* ---------- Respeita quem prefere menos movimento ---------- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }

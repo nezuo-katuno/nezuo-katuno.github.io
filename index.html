@@ -2,74 +2,122 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda Escolar Compartilhada</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#F2F4FA" id="meta-tema">
+    <meta name="color-scheme" content="light dark">
+    <title>Agenda Escolar</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Agenda Escolar</h1>
-        <div class="header-botoes">
+
+    <!-- Ícones (estilo traço). Usados com <svg class="icone"><use href="#i-nome"/></svg> -->
+    <svg class="sprite" aria-hidden="true" focusable="false">
+        <symbol id="i-calendario" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+        <symbol id="i-calendario-ok" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></symbol>
+        <symbol id="i-lua" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+        <symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+        <symbol id="i-sair" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+        <symbol id="i-mais" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+        <symbol id="i-lapis" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol>
+        <symbol id="i-lixeira" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
+        <symbol id="i-usuario" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    </svg>
+
+    <header class="barra">
+        <div class="marca">
+            <span class="marca-icone"><svg class="icone"><use href="#i-calendario"/></svg></span>
+            <h1>Agenda Escolar</h1>
+        </div>
+        <div class="barra-acoes">
             <span id="usuario-logado" class="usuario-logado" hidden></span>
-            <button id="btn-tema">🌙 Escuro</button>
-            <button id="btn-nova-atividade" hidden>+ Nova Atividade</button>
-            <button id="btn-sair" hidden>Sair</button>
+            <button id="btn-tema" class="btn-icone" type="button" aria-label="Usar tema escuro" title="Alternar tema">
+                <svg class="icone"><use href="#i-lua"/></svg>
+            </button>
+            <button id="btn-sair" class="btn-icone" type="button" aria-label="Sair" title="Sair" hidden>
+                <svg class="icone"><use href="#i-sair"/></svg>
+            </button>
         </div>
     </header>
 
     <!-- Tela de login / criar conta -->
     <section id="tela-login" class="tela-login" hidden>
-        <h2>Entrar na agenda</h2>
-        <form id="form-login">
-            <label for="login-usuario">Nome de usuário:</label>
-            <input type="text" id="login-usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required>
-            <small class="login-dica">3 a 20 caracteres: letras, números e _</small>
+        <div class="login-cartao">
+            <span class="marca-icone grande"><svg class="icone"><use href="#i-calendario"/></svg></span>
+            <h2>Entrar na agenda</h2>
+            <p class="login-sub">Use seu nome de usuário e sua senha.</p>
 
-            <label for="login-senha">Senha:</label>
-            <input type="password" id="login-senha" autocomplete="current-password" minlength="6" required>
-            <small class="login-dica">Mínimo de 6 caracteres. Não há recuperação de senha, então anote a sua.</small>
+            <form id="form-login">
+                <label for="login-usuario">Nome de usuário</label>
+                <input type="text" id="login-usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                <small class="login-dica">3 a 20 caracteres: letras, números e _</small>
 
-            <p id="login-msg" class="login-msg" role="alert"></p>
+                <label for="login-senha">Senha</label>
+                <input type="password" id="login-senha" autocomplete="current-password" minlength="6" required>
+                <small class="login-dica">Mínimo de 6 caracteres. Não há recuperação de senha, então anote a sua.</small>
 
-            <div class="login-botoes">
-                <button type="submit" id="btn-entrar">Entrar</button>
-                <button type="button" id="btn-criar-conta">Criar conta</button>
-            </div>
-        </form>
+                <p id="login-msg" class="login-msg" role="alert"></p>
+
+                <div class="login-botoes">
+                    <button type="submit" id="btn-entrar" class="btn btn-primario">Entrar</button>
+                    <button type="button" id="btn-criar-conta" class="btn btn-secundario">Criar conta</button>
+                </div>
+            </form>
+        </div>
     </section>
 
     <main id="area-app" hidden>
-        <section id="lista-atividades" class="grid-atividades">
+        <section id="lista-atividades" class="lista" aria-live="polite">
             <!-- As atividades aparecerão aqui via JavaScript -->
         </section>
     </main>
 
+    <!-- Botão flutuante: só o admin vê -->
+    <button id="btn-nova-atividade" class="fab" type="button" aria-label="Nova atividade" hidden>
+        <svg class="icone"><use href="#i-mais"/></svg>
+        <span>Nova atividade</span>
+    </button>
+
     <!-- Modal para adicionar/editar atividade (só o admin abre) -->
     <div id="modal" class="modal oculto">
-        <div class="modal-conteudo">
-            <span class="fechar">&times;</span>
+        <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+            <button type="button" class="fechar btn-icone" aria-label="Fechar">
+                <svg class="icone"><use href="#i-x"/></svg>
+            </button>
             <h2 id="modal-titulo">Adicionar Atividade</h2>
             <form id="form-atividade">
-                <label for="titulo">Título da Atividade:</label>
+                <label for="titulo">Título</label>
                 <input type="text" id="titulo" required>
 
-                <label for="materia">Matéria e Professor:</label>
+                <label for="materia">Matéria e professor</label>
                 <select id="materia" required>
                     <!-- Preenchido via JS -->
                 </select>
 
-                <label for="prazo">Prazo (Data):</label>
+                <label for="prazo">Prazo</label>
                 <input type="date" id="prazo" required>
 
-                <label for="descricao">Descrição:</label>
+                <label for="descricao">Descrição</label>
                 <textarea id="descricao" rows="4"></textarea>
 
-                <label for="imagem">Anexar Imagem:</label>
+                <label for="imagem">Imagem (opcional)</label>
                 <input type="file" id="imagem" accept="image/*">
 
-                <button type="submit" class="btn-salvar">Salvar Atividade</button>
+                <button type="submit" class="btn btn-primario btn-salvar btn-bloco">Salvar Atividade</button>
             </form>
         </div>
+    </div>
+
+    <!-- Imagem ampliada -->
+    <div id="lightbox" class="lightbox" hidden>
+        <button type="button" class="lightbox-fechar btn-icone" aria-label="Fechar imagem">
+            <svg class="icone"><use href="#i-x"/></svg>
+        </button>
+        <img alt="">
     </div>
 
     <script type="module" src="app.js"></script>
