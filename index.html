@@ -10,22 +10,45 @@
     <header>
         <h1>Agenda Escolar</h1>
         <div class="header-botoes">
+            <span id="usuario-logado" class="usuario-logado" hidden></span>
             <button id="btn-tema">🌙 Escuro</button>
-            <button id="btn-nova-atividade">+ Nova Atividade</button>
+            <button id="btn-nova-atividade" hidden>+ Nova Atividade</button>
+            <button id="btn-sair" hidden>Sair</button>
         </div>
     </header>
 
-    <main>
+    <!-- Tela de login / criar conta -->
+    <section id="tela-login" class="tela-login" hidden>
+        <h2>Entrar na agenda</h2>
+        <form id="form-login">
+            <label for="login-usuario">Nome de usuário:</label>
+            <input type="text" id="login-usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+            <small class="login-dica">3 a 20 caracteres: letras, números e _</small>
+
+            <label for="login-senha">Senha:</label>
+            <input type="password" id="login-senha" autocomplete="current-password" minlength="6" required>
+            <small class="login-dica">Mínimo de 6 caracteres. Não há recuperação de senha, então anote a sua.</small>
+
+            <p id="login-msg" class="login-msg" role="alert"></p>
+
+            <div class="login-botoes">
+                <button type="submit" id="btn-entrar">Entrar</button>
+                <button type="button" id="btn-criar-conta">Criar conta</button>
+            </div>
+        </form>
+    </section>
+
+    <main id="area-app" hidden>
         <section id="lista-atividades" class="grid-atividades">
             <!-- As atividades aparecerão aqui via JavaScript -->
         </section>
     </main>
 
-    <!-- Modal para adicionar atividade -->
+    <!-- Modal para adicionar/editar atividade (só o admin abre) -->
     <div id="modal" class="modal oculto">
         <div class="modal-conteudo">
             <span class="fechar">&times;</span>
-            <h2>Adicionar Atividade</h2>
+            <h2 id="modal-titulo">Adicionar Atividade</h2>
             <form id="form-atividade">
                 <label for="titulo">Título da Atividade:</label>
                 <input type="text" id="titulo" required>
@@ -41,7 +64,7 @@
                 <label for="descricao">Descrição:</label>
                 <textarea id="descricao" rows="4"></textarea>
 
-                <label for="imagem">Anexar Imagem (Até 800kb):</label>
+                <label for="imagem">Anexar Imagem:</label>
                 <input type="file" id="imagem" accept="image/*">
 
                 <button type="submit" class="btn-salvar">Salvar Atividade</button>

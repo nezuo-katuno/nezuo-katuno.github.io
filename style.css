@@ -1,50 +1,79 @@
-/* Variáveis de cores (Modo Claro Padrão) */
-:root {
-    --primary: #4a90e2;
-    --background: #f4f7f6;
-    --text: #333;
-    --card-bg: #fff;
-    --border: #ddd;
-    --modal-bg: #fff;
+/* Cole este bloco no FINAL do seu style.css */
+
+/* Faz o atributo "hidden" funcionar mesmo em elementos com display:flex/grid */
+[hidden] {
+    display: none !important;
 }
 
-/* Variáveis de cores (Modo Escuro) */
-body.dark-mode {
-    --primary: #5fa5f9;
-    --background: #121212;
-    --text: #e0e0e0;
-    --card-bg: #1e1e1e;
-    --border: #333;
-    --modal-bg: #2d2d2d;
+.usuario-logado {
+    font-size: 0.9em;
+    opacity: 0.85;
+    align-self: center;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+/* Tela de login: usa transparências para funcionar no tema claro e no escuro */
+.tela-login {
+    max-width: 360px;
+    margin: 40px auto;
+    padding: 24px;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 12px;
+    background: rgba(128, 128, 128, 0.08);
+}
 
-body { background-color: var(--background); color: var(--text); padding: 20px; transition: background 0.3s, color 0.3s; }
+.tela-login h2 {
+    margin-top: 0;
+}
 
-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
-.header-botoes { display: flex; gap: 10px; }
+.tela-login label {
+    display: block;
+    margin-top: 14px;
+    font-weight: 600;
+}
 
-button { background-color: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-button:hover { filter: brightness(0.9); }
+.tela-login input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 6px;
+    padding: 10px;
+    font-size: 1em;
+}
 
-#btn-tema { background-color: transparent; border: 1px solid var(--text); color: var(--text); }
+.login-dica {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
 
-.grid-atividades { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.login-msg {
+    min-height: 1.3em;
+    margin: 14px 0 0;
+    color: #d64545;
+    font-size: 0.9em;
+}
 
-.card { background: var(--card-bg); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid var(--border); }
-.card h3 { margin-bottom: 5px; color: var(--primary); }
-.card .materia-info { font-size: 0.9em; opacity: 0.8; margin-bottom: 10px; font-weight: bold; }
-.card .prazo { color: #d9534f; font-weight: bold; margin-bottom: 10px; }
-.card img { max-width: 100%; border-radius: 5px; margin-top: 10px; }
+.login-botoes {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
 
-.btn-excluir { background-color: #d9534f; width: 100%; margin-top: 15px; }
+.login-botoes button {
+    flex: 1;
+    padding: 10px;
+    font-size: 1em;
+    cursor: pointer;
+}
 
-/* Modal */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; }
-.modal.oculto { display: none; }
-.modal-conteudo { background: var(--modal-bg); color: var(--text); padding: 20px; border-radius: 8px; width: 100%; max-width: 400px; position: relative; }
-.fechar { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
+/* Botões de Editar/Excluir nos cards (só o admin vê) */
+.card-acoes {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
 
-form { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-input, select, textarea { padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--background); color: var(--text); }
+.btn-editar {
+    padding: 6px 12px;
+    cursor: pointer;
+}
