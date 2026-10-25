@@ -12,7 +12,7 @@ import {
 // (Authentication > Users) e cole aqui. Cole o mesmo UID nas regras do Firestore.
 // É as regras do Firestore que realmente protegem os dados; esta constante só
 // decide quais botões aparecem na tela.
-const ADMIN_UID = "COLE_AQUI_O_UID_DO_ADMIN";
+const ADMIN_UID = "CGOkgSs602YCTOALsGSocXtYdJr2";
 
 // O Firebase só aceita login com e-mail. Para o usuário digitar apenas o nome,
 // o site monta um e-mail interno (usuario@agenda-escolar.app). Ele não precisa existir.
@@ -400,7 +400,7 @@ onAuthStateChanged(auth, (user) => {
     console.log("UID logado:", user.uid);
     console.log("ADMIN_UID no código:", ADMIN_UID);
     console.log("É admin?", ehAdmin);
-    
+
     telaLogin.hidden = true;
     areaApp.hidden = false;
     btnSair.hidden = false;
