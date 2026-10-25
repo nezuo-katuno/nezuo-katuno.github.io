@@ -397,8 +397,10 @@ onAuthStateChanged(auth, (user) => {
     }
 
     ehAdmin = user.uid === ADMIN_UID;
-    console.log("UID logado:", user.uid, "| admin:", ehAdmin);
-
+    console.log("UID logado:", user.uid);
+    console.log("ADMIN_UID no código:", ADMIN_UID);
+    console.log("É admin?", ehAdmin);
+    
     telaLogin.hidden = true;
     areaApp.hidden = false;
     btnSair.hidden = false;
