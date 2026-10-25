@@ -9,7 +9,10 @@
 <body>
     <header>
         <h1>Agenda Escolar</h1>
-        <button id="btn-nova-atividade">+ Nova Atividade</button>
+        <div class="header-botoes">
+            <button id="btn-tema">🌙 Escuro</button>
+            <button id="btn-nova-atividade">+ Nova Atividade</button>
+        </div>
     </header>
 
     <main>
@@ -38,7 +41,7 @@
                 <label for="descricao">Descrição:</label>
                 <textarea id="descricao" rows="4"></textarea>
 
-                <label for="imagem">Anexar Imagem:</label>
+                <label for="imagem">Anexar Imagem (Até 800kb):</label>
                 <input type="file" id="imagem" accept="image/*">
 
                 <button type="submit" class="btn-salvar">Salvar Atividade</button>
@@ -46,8 +49,6 @@
         </div>
     </div>
 
-    <!-- Troque a linha antiga por esta: -->
-<script type="module" src="app.js"></script>
-
+    <script type="module" src="app.js"></script>
 </body>
 </html>
