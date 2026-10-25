@@ -397,6 +397,7 @@ onAuthStateChanged(auth, (user) => {
     }
 
     ehAdmin = user.uid === ADMIN_UID;
+    console.log("UID logado:", user.uid, "| admin:", ehAdmin);
 
     telaLogin.hidden = true;
     areaApp.hidden = false;
