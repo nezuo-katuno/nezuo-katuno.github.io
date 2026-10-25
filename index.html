@@ -1,60 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Page</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 0 20px;
-            color: #333;
-            background-color: #f9f9f9;
-        }
-        .container {
-            background: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #24292e;
-            border-bottom: 2px solid #eaecef;
-            padding-bottom: 10px;
-        }
-        .btn {
-            display: inline-block;
-            background-color: #2ea44f;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background-color: #2c974b;
-        }
-    </style>
+    <title>Agenda Escolar Compartilhada</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <header>
+        <h1>Agenda Escolar</h1>
+        <button id="btn-nova-atividade">+ Nova Atividade</button>
+    </header>
 
-    <div class="container">
-        <h1>HTML Test Success!</h1>
-        <p>If you can see this styled box, your HTML file is working perfectly.</p>
-        
-        <button class="btn" onclick="showAlert()">Click Me</button>
+    <main>
+        <section id="lista-atividades" class="grid-atividades">
+            <!-- As atividades aparecerão aqui via JavaScript -->
+        </section>
+    </main>
+
+    <!-- Modal para adicionar atividade -->
+    <div id="modal" class="modal oculto">
+        <div class="modal-conteudo">
+            <span class="fechar">&times;</span>
+            <h2>Adicionar Atividade</h2>
+            <form id="form-atividade">
+                <label for="titulo">Título da Atividade:</label>
+                <input type="text" id="titulo" required>
+
+                <label for="materia">Matéria e Professor:</label>
+                <select id="materia" required>
+                    <!-- Preenchido via JS -->
+                </select>
+
+                <label for="prazo">Prazo (Data):</label>
+                <input type="date" id="prazo" required>
+
+                <label for="descricao">Descrição:</label>
+                <textarea id="descricao" rows="4"></textarea>
+
+                <label for="imagem">Anexar Imagem:</label>
+                <input type="file" id="imagem" accept="image/*">
+
+                <button type="submit" class="btn-salvar">Salvar Atividade</button>
+            </form>
+        </div>
     </div>
 
-    <script>
-        function showAlert() {
-            alert('JavaScript is also working!');
-        }
-    </script>
-
+    <script src="app.js"></script>
 </body>
 </html>
