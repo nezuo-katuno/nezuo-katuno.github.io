@@ -35,6 +35,9 @@
         <symbol id="i-lapis" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol>
         <symbol id="i-lixeira" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
         <symbol id="i-usuario" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+        <symbol id="i-enviar" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+        <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
     </svg>
 
     <header class="barra">
@@ -44,6 +47,7 @@
         </div>
         <div class="barra-acoes">
             <span id="usuario-logado" class="usuario-logado" hidden></span>
+            <button id="btn-perfil-cabecalho" class="avatar-btn" type="button" aria-label="Meu perfil" hidden></button>
             <button id="btn-tema" class="btn-icone" type="button" aria-label="Usar tema escuro" title="Alternar tema">
                 <svg class="icone"><use href="#i-lua"/></svg>
             </button>
@@ -84,6 +88,68 @@
             <!-- As atividades aparecerão aqui via JavaScript -->
         </section>
     </main>
+
+    <!-- Chat global -->
+    <section id="area-chat" class="area-chat" hidden>
+        <div id="lista-chat" class="chat-lista" aria-live="polite"></div>
+        <form id="form-chat" class="chat-entrada" autocomplete="off">
+            <textarea id="chat-texto" rows="1" maxlength="500" placeholder="Escreva uma mensagem" aria-label="Mensagem"></textarea>
+            <button type="submit" class="chat-enviar" aria-label="Enviar mensagem">
+                <svg class="icone"><use href="#i-enviar"/></svg>
+            </button>
+        </form>
+    </section>
+
+    <!-- Perfil -->
+    <section id="area-perfil" class="area-perfil" hidden>
+        <div class="perfil-cartao">
+            <div class="perfil-foto">
+                <span id="perfil-avatar"></span>
+                <button type="button" id="btn-trocar-foto" class="btn-foto" aria-label="Trocar foto">
+                    <svg class="icone"><use href="#i-camera"/></svg>
+                </button>
+                <input type="file" id="input-foto" accept="image/*" hidden>
+            </div>
+            <p id="perfil-usuario" class="perfil-usuario"></p>
+
+            <form id="form-perfil">
+                <label for="perfil-nome">Nome de exibição</label>
+                <input type="text" id="perfil-nome" maxlength="30" required>
+                <small class="login-dica">É o nome que aparece no chat. Seu @usuário não muda, porque é o seu login.</small>
+
+                <button type="button" id="btn-remover-foto" class="btn btn-secundario btn-bloco" hidden>Remover foto</button>
+
+                <p id="perfil-msg" class="login-msg" role="status"></p>
+                <button type="submit" id="btn-salvar-perfil" class="btn btn-primario btn-bloco">Salvar perfil</button>
+            </form>
+
+            <button type="button" id="btn-sair-perfil" class="btn btn-secundario btn-bloco">
+                <svg class="icone"><use href="#i-sair"/></svg>
+                Sair da conta
+            </button>
+        </div>
+    </section>
+
+    <!-- Barra de abas -->
+    <nav id="barra-abas" class="abas" aria-label="Navegação principal" hidden>
+        <div class="abas-lista">
+            <button type="button" class="aba ativa" data-aba="agenda">
+                <span class="aba-icone"><svg class="icone"><use href="#i-calendario"/></svg></span>
+                <span>Agenda</span>
+            </button>
+            <button type="button" class="aba" data-aba="chat">
+                <span class="aba-icone">
+                    <svg class="icone"><use href="#i-chat"/></svg>
+                    <span id="badge-chat" class="badge" hidden></span>
+                </span>
+                <span>Chat</span>
+            </button>
+            <button type="button" class="aba" data-aba="perfil">
+                <span class="aba-icone"><svg class="icone"><use href="#i-usuario"/></svg></span>
+                <span>Perfil</span>
+            </button>
+        </div>
+    </nav>
 
     <!-- Botão flutuante: só o admin vê -->
     <button id="btn-nova-atividade" class="fab" type="button" aria-label="Nova atividade" hidden>
@@ -130,6 +196,7 @@
     </div>
 
     <script type="module" src="app.js"></script>
+    <script type="module" src="social.js"></script>
     <script>
         // Registra o service worker (permite instalar o site como app e abrir sem internet)
         if ('serviceWorker' in navigator) {
