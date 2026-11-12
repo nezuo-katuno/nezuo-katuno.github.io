@@ -1,9 +1,13 @@
 import {
     db, auth,
-    collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot,
+    collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, serverTimestamp,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from './firebase-config.js';
 import { ADMIN_UID } from './config-admin.js';
+import {
+    MATERIAS, corDaMateria, perfis, aoMudarPerfis, abrirPerfil,
+    criar, icone, trocarIcone, criarAvatar, tempoMs, tempoRelativo
+} from './util.js';
 
 // ============================================================
 // CONFIGURAÇÃO
@@ -13,37 +17,9 @@ import { ADMIN_UID } from './config-admin.js';
 // o site monta um e-mail interno (usuario@agenda-escolar.app). Ele não precisa existir.
 const DOMINIO_INTERNO = "agenda-escolar.app";
 
-const materias = [
-    { id: 1, nome: "Matemática", professor: "Profa. Pétria" },
-    { id: 2, nome: "Física", professor: "Prof. Fábio" },
-    { id: 3, nome: "Química", professor: "Profa. Amanda" },
-    { id: 4, nome: "Animação 3D", professor: "Prof. Robson" },
-    { id: 5, nome: "TDDGAIII", professor: "Prof. Robson" },
-    { id: 6, nome: "Ética e Cidadania", professor: "Profa. Juliana" },
-    { id: 7, nome: "Português", professor: "Profa. Mariângela" },
-    { id: 8, nome: "TLBD", professor: "Prof. Jackson" },
-    { id: 9, nome: "Inglês", professor: "Prof. Gilson" },
-    { id: 10, nome: "Espanhol", professor: "Profa. Janaina" },
-    { id: 11, nome: "LPII", professor: "Prof. Marcos" },
-    { id: 12, nome: "PDTCC", professor: "Prof. Luiz Angelo" },
-    { id: 13, nome: "Filosofia", professor: "Prof. Carlos" },
-    { id: 14, nome: "Sociologia", professor: "Prof. Carlos" },
-    { id: 15, nome: "Programação Mobile", professor: "Prof. Marcos" },
-    { id: 16, nome: "Marketing de Jogos", professor: "Prof. João Paulo" }
-];
-
 // O documento do Firestore aceita ~1 MB. A imagem vira texto (base64) e cresce ~33%,
 // então limitamos o texto final em vez do tamanho do arquivo original.
 const LIMITE_IMAGEM_CHARS = 700000;
-
-// Grupos da lista, do mais urgente para o mais distante.
-const GRUPOS = [
-    { chave: 'atrasadas', titulo: 'Atrasadas', testa: (d) => d < 0 },
-    { chave: 'hoje', titulo: 'Hoje', testa: (d) => d === 0 },
-    { chave: 'amanha', titulo: 'Amanhã', testa: (d) => d === 1 },
-    { chave: 'semana', titulo: 'Esta semana', testa: (d) => d >= 2 && d <= 7 },
-    { chave: 'depois', titulo: 'Mais para frente', testa: (d) => d > 7 }
-];
 
 // ============================================================
 // ELEMENTOS DA PÁGINA
@@ -55,58 +31,21 @@ const btnFechar = document.querySelector('.fechar');
 const form = document.getElementById('form-atividade');
 const selectMateria = document.getElementById('materia');
 const listaAtividades = document.getElementById('lista-atividades');
+const filtros = document.getElementById('filtros-agenda');
 const btnTema = document.getElementById('btn-tema');
 const metaTema = document.getElementById('meta-tema');
 
 const telaLogin = document.getElementById('tela-login');
 const formLogin = document.getElementById('form-login');
 const inputUsuario = document.getElementById('login-usuario');
-const inputSenha = document.getElementById('login-senha');
 const btnEntrar = document.getElementById('btn-entrar');
 const btnCriarConta = document.getElementById('btn-criar-conta');
 const msgLogin = document.getElementById('login-msg');
 const areaApp = document.getElementById('area-app');
-const spanUsuario = document.getElementById('usuario-logado');
 const btnSair = document.getElementById('btn-sair');
 
 const lightbox = document.getElementById('lightbox');
 const lightboxImg = lightbox.querySelector('img');
-
-// ============================================================
-// AUXILIARES (criar elementos e ícones)
-// ============================================================
-const NS_SVG = 'http://www.w3.org/2000/svg';
-
-function criar(tag, classe, texto) {
-    const el = document.createElement(tag);
-    if (classe) el.className = classe;
-    if (texto !== undefined) el.textContent = texto; // textContent: nada digitado vira HTML/código
-    return el;
-}
-
-function icone(nome) {
-    const svg = document.createElementNS(NS_SVG, 'svg');
-    svg.setAttribute('class', 'icone');
-    svg.setAttribute('aria-hidden', 'true');
-    const uso = document.createElementNS(NS_SVG, 'use');
-    uso.setAttribute('href', `#i-${nome}`);
-    svg.appendChild(uso);
-    return svg;
-}
-
-function trocarIcone(botao, nome) {
-    botao.querySelector('use').setAttribute('href', `#i-${nome}`);
-}
-
-function botaoIcone(nomeIcone, rotulo, classesExtra, aoClicar) {
-    const botao = criar('button', `btn-icone pequeno ${classesExtra || ''}`.trim());
-    botao.type = 'button';
-    botao.setAttribute('aria-label', rotulo);
-    botao.title = rotulo;
-    botao.appendChild(icone(nomeIcone));
-    botao.addEventListener('click', aoClicar);
-    return botao;
-}
 
 // ============================================================
 // TEMA (CLARO/ESCURO) - começa pelo tema do aparelho
@@ -164,7 +103,7 @@ async function autenticar(criarConta) {
     try {
         const usuario = validarUsuario(inputUsuario.value);
         const email = `${usuario}@${DOMINIO_INTERNO}`;
-        const senha = inputSenha.value;
+        const senha = document.getElementById('login-senha').value;
 
         if (criarConta) {
             await createUserWithEmailAndPassword(auth, email, senha);
@@ -196,7 +135,7 @@ btnSair.addEventListener('click', () => signOut(auth));
 // ============================================================
 // SELECT DE MATÉRIAS
 // ============================================================
-materias.forEach(m => {
+MATERIAS.forEach(m => {
     const option = document.createElement('option');
     option.value = m.id;
     option.textContent = `${m.nome} (${m.professor})`;
@@ -259,7 +198,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ============================================================
-// DATAS E CORES
+// DATAS
 // ============================================================
 function diasAte(prazo) {
     if (!prazo) return Infinity;
@@ -276,31 +215,45 @@ function dataLocal(prazo) {
 
 function textoSituacao(dias) {
     if (dias === Infinity) return 'Sem prazo';
-    if (dias < 0) return dias === -1 ? 'Venceu ontem' : `Venceu há ${-dias} dias`;
     if (dias === 0) return 'Vence hoje';
     if (dias === 1) return 'Vence amanhã';
     return `Em ${dias} dias`;
 }
 
 function classeUrgencia(dias) {
-    if (dias < 0) return 'urgencia-atrasada';
     if (dias === 0) return 'urgencia-hoje';
     if (dias === 1) return 'urgencia-amanha';
     return 'urgencia-futura';
 }
 
-// Cada matéria ganha sua própria cor (distribuída pelo círculo de cores).
-function corDaMateria(id) {
-    return `hsl(${Math.round((Number(id) * 137.508) % 360)} 62% 46%)`;
+function porPrazo(a, b) {
+    return (a.prazo || '9999-99-99').localeCompare(b.prazo || '9999-99-99');
 }
 
 // ============================================================
-// ATIVIDADES: cache + tempo real
+// ESTADO DA AGENDA
 // ============================================================
 let atividades = [];
 let ehAdmin = false;
+let logado = false;
 let cancelarEscuta = null;
-let jaDesenhou = false; // a animação de entrada só acontece na primeira vez
+let jaDesenhou = false;     // a animação de entrada só acontece na primeira vez
+let filtroMateria = 0;      // 0 = todas
+
+// "Feita" é só uma marcação sua, guardada neste aparelho.
+let feitas = new Set();
+try { feitas = new Set(JSON.parse(localStorage.getItem('atividadesFeitas')) || []); } catch (e) { /* começa vazio */ }
+
+function salvarFeitas() {
+    try { localStorage.setItem('atividadesFeitas', JSON.stringify([...feitas])); } catch (e) { /* ignora */ }
+}
+
+function alternarFeita(id) {
+    if (feitas.has(id)) feitas.delete(id);
+    else feitas.add(id);
+    salvarFeitas();
+    renderizarAtividades();
+}
 
 function lerCache() {
     try {
@@ -318,7 +271,7 @@ function escutarAtividades() {
     return onSnapshot(collection(db, "atividades"), (snapshot) => {
         atividades = [];
         snapshot.forEach((d) => {
-            atividades.push({ id: d.id, ...d.data() });
+            atividades.push({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) });
         });
 
         // Primeiro desenha a tela: se o cache falhar, a lista continua atualizando.
@@ -326,7 +279,7 @@ function escutarAtividades() {
 
         // Cache sem as imagens (o localStorage tem só ~5 MB).
         try {
-            const leve = atividades.map(({ imagem, ...resto }) => resto);
+            const leve = atividades.map(({ imagem, criadoEm, ...resto }) => resto);
             localStorage.setItem('cacheAtividades', JSON.stringify(leve));
         } catch (e) { /* cache cheio ou indisponível: não é grave */ }
     }, (erro) => {
@@ -337,60 +290,118 @@ function escutarAtividades() {
     });
 }
 
-function estadoVazio() {
+// ============================================================
+// FEED DE ATIVIDADES (estilo Twitter)
+// ============================================================
+function estadoVazio(titulo, texto) {
     const caixa = criar('div', 'vazio');
     caixa.appendChild(icone('calendario-ok'));
-    caixa.appendChild(criar('h2', '', 'Nada pendente'));
-    caixa.appendChild(criar('p', '', ehAdmin
-        ? 'Toque em "+" para adicionar a primeira atividade.'
-        : 'Quando houver atividades, elas aparecem aqui.'));
+    caixa.appendChild(criar('h2', '', titulo));
+    caixa.appendChild(criar('p', '', texto));
     return caixa;
 }
 
-function criarCartao(ativ, indice, animar) {
-    const mat = materias.find(m => m.id == ativ.materiaId) || { nome: "Desconhecida", professor: "-" };
+function botaoAcao(nomeIcone, texto, classes, aoClicar) {
+    const botao = criar('button', `acao ${classes || ''}`.trim());
+    botao.type = 'button';
+    botao.appendChild(icone(nomeIcone));
+    if (texto) botao.appendChild(criar('span', '', texto));
+    botao.addEventListener('click', aoClicar);
+    return botao;
+}
+
+function atualizarFiltros(visiveis) {
+    filtros.replaceChildren();
+    if (!logado || visiveis.length === 0) {
+        filtros.hidden = true;
+        return;
+    }
+
+    const ids = [...new Set(visiveis.map((a) => Number(a.materiaId)))];
+    const nomeDe = (id) => (MATERIAS.find((m) => m.id === id) || { nome: 'Outra' }).nome;
+    ids.sort((a, b) => nomeDe(a).localeCompare(nomeDe(b), 'pt-BR'));
+
+    if (filtroMateria !== 0 && !ids.includes(filtroMateria)) filtroMateria = 0;
+
+    const adicionar = (id, rotulo) => {
+        const chip = criar('button', 'chip-filtro', rotulo);
+        chip.type = 'button';
+        chip.setAttribute('aria-pressed', String(filtroMateria === id));
+        chip.addEventListener('click', () => definirFiltro(id));
+        filtros.appendChild(chip);
+    };
+
+    adicionar(0, 'Todas');
+    ids.forEach((id) => adicionar(id, nomeDe(id)));
+    filtros.hidden = false;
+}
+
+function definirFiltro(id) {
+    filtroMateria = filtroMateria === id ? 0 : id;
+    renderizarAtividades();
+    window.scrollTo({ top: 0 });
+}
+
+function criarPost(ativ, indice, animar) {
+    const mat = MATERIAS.find((m) => m.id == ativ.materiaId) || { id: 0, nome: "Desconhecida", professor: "-" };
     const dias = diasAte(ativ.prazo);
+    const feita = feitas.has(ativ.id);
 
-    const card = criar('article', `tarefa ${classeUrgencia(dias)}`);
-    card.style.setProperty('--materia', corDaMateria(ativ.materiaId));
+    // Quem "posta" as atividades é sempre o admin.
+    const autor = perfis.get(ADMIN_UID);
+    const nomeAutor = (autor && (autor.nomeExibicao || autor.usuario)) || 'Agenda';
+    const handle = autor && autor.usuario ? `@${autor.usuario}` : '';
+
+    const post = criar('article', `post ${classeUrgencia(dias)}${feita ? ' feita' : ''}`);
+    post.style.setProperty('--materia', corDaMateria(ativ.materiaId));
     if (animar) {
-        card.classList.add('entrada');
-        card.style.setProperty('--i', Math.min(indice, 8));
+        post.classList.add('entrada');
+        post.style.setProperty('--i', Math.min(indice, 8));
     }
 
-    // Bloco da data (dia da semana, dia, mês)
-    const bloco = criar('div', 'tarefa-data');
-    if (ativ.prazo) {
-        const data = dataLocal(ativ.prazo);
-        const semana = data.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
-        const mes = data.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
-        bloco.appendChild(criar('span', 'semana', semana));
-        bloco.appendChild(criar('span', 'dia', String(data.getDate())));
-        bloco.appendChild(criar('span', 'mes', mes));
-    } else {
-        bloco.appendChild(criar('span', 'dia', '-'));
+    // Coluna do avatar
+    const colunaAvatar = criar('div', 'post-avatar');
+    const avatar = criarAvatar(autor || { nomeExibicao: nomeAutor }, ADMIN_UID, 'medio');
+    if (autor) {
+        avatar.classList.add('clicavel');
+        avatar.addEventListener('click', () => abrirPerfil(ADMIN_UID));
     }
-    card.appendChild(bloco);
+    colunaAvatar.appendChild(avatar);
+    post.appendChild(colunaAvatar);
 
-    // Corpo do cartão
-    const corpo = criar('div', 'tarefa-corpo');
+    // Coluna do conteúdo
+    const corpo = criar('div', 'post-corpo');
 
-    const topo = criar('div', 'tarefa-topo');
-    topo.appendChild(criar('span', 'chip-materia', mat.nome));
-    topo.appendChild(criar('span', 'situacao', textoSituacao(dias)));
-    corpo.appendChild(topo);
+    const cab = criar('div', 'post-cab');
+    const nome = criar('span', 'post-nome', nomeAutor);
+    if (autor) {
+        nome.classList.add('clicavel');
+        nome.addEventListener('click', () => abrirPerfil(ADMIN_UID));
+    }
+    cab.appendChild(nome);
+    if (handle) cab.appendChild(criar('span', 'post-handle', handle));
+    const quando = tempoMs(ativ.criadoEm);
+    if (quando) cab.appendChild(criar('span', 'post-tempo', `· ${tempoRelativo(quando)}`));
+    corpo.appendChild(cab);
 
-    corpo.appendChild(criar('h3', '', ativ.titulo));
+    corpo.appendChild(criar('h3', 'post-titulo', ativ.titulo));
+    if (ativ.descricao) corpo.appendChild(criar('p', 'post-texto', ativ.descricao));
 
-    const professor = criar('p', 'professor');
-    professor.appendChild(icone('usuario'));
-    professor.appendChild(document.createTextNode(mat.professor));
-    corpo.appendChild(professor);
-
-    if (ativ.descricao) corpo.appendChild(criar('p', 'descricao', ativ.descricao));
+    // #Matéria (clicar filtra o feed) e professor
+    const tags = criar('div', 'post-tags');
+    const hashtag = criar('button', 'hashtag', `#${mat.nome.replace(/\s+/g, '')}`);
+    hashtag.type = 'button';
+    hashtag.title = `Ver só ${mat.nome}`;
+    hashtag.addEventListener('click', () => definirFiltro(Number(ativ.materiaId)));
+    tags.appendChild(hashtag);
+    const prof = criar('span', 'post-prof');
+    prof.appendChild(icone('usuario'));
+    prof.appendChild(document.createTextNode(mat.professor));
+    tags.appendChild(prof);
+    corpo.appendChild(tags);
 
     if (ativ.imagem && ativ.imagem.startsWith('data:image/')) {
-        const img = criar('img', 'tarefa-img');
+        const img = criar('img', 'post-img');
         img.src = ativ.imagem;
         img.alt = `Imagem da atividade ${ativ.titulo}`;
         img.loading = 'lazy';
@@ -398,45 +409,80 @@ function criarCartao(ativ, indice, animar) {
         corpo.appendChild(img);
     }
 
-    // Só o admin vê os botões de gerenciar. Os amigos só visualizam.
-    if (ehAdmin) {
-        const acoes = criar('div', 'tarefa-acoes');
-        acoes.appendChild(botaoIcone('lapis', 'Editar atividade', '', () => abrirModal(ativ)));
-        acoes.appendChild(botaoIcone('lixeira', 'Excluir atividade', 'perigo', () => deletarAtividade(ativ.id)));
-        corpo.appendChild(acoes);
-    }
+    // Caixa do prazo
+    const prazo = criar('div', 'post-prazo');
+    const iconePrazo = criar('span', 'prazo-icone');
+    iconePrazo.appendChild(icone('calendario'));
+    prazo.appendChild(iconePrazo);
+    const textoPrazo = criar('div', 'prazo-texto');
+    textoPrazo.appendChild(criar('span', 'prazo-rotulo', 'Entrega'));
+    textoPrazo.appendChild(criar('span', 'prazo-data', ativ.prazo
+        ? dataLocal(ativ.prazo).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+        : 'Sem data'));
+    prazo.appendChild(textoPrazo);
+    prazo.appendChild(criar('span', 'prazo-pill', textoSituacao(dias)));
+    corpo.appendChild(prazo);
 
-    card.appendChild(corpo);
-    return card;
+    // Ações
+    const acoes = criar('div', 'post-acoes');
+    const btnFeita = botaoAcao('feito', feita ? 'Feita' : 'Marcar como feita', feita ? 'ativa' : '', () => alternarFeita(ativ.id));
+    btnFeita.setAttribute('aria-pressed', String(feita));
+    acoes.appendChild(btnFeita);
+
+    if (ehAdmin) {
+        acoes.appendChild(criar('span', 'acao-espaco'));
+        const btnEditar = botaoAcao('lapis', '', '', () => abrirModal(ativ));
+        btnEditar.setAttribute('aria-label', 'Editar atividade');
+        btnEditar.title = 'Editar atividade';
+        acoes.appendChild(btnEditar);
+        const btnExcluir = botaoAcao('lixeira', '', 'perigo', () => deletarAtividade(ativ.id));
+        btnExcluir.setAttribute('aria-label', 'Excluir atividade');
+        btnExcluir.title = 'Excluir atividade';
+        acoes.appendChild(btnExcluir);
+    }
+    corpo.appendChild(acoes);
+
+    post.appendChild(corpo);
+    return post;
 }
 
 function renderizarAtividades() {
     listaAtividades.replaceChildren();
-    atividades.sort((a, b) => (a.prazo || '').localeCompare(b.prazo || ''));
 
-    if (atividades.length === 0) {
-        listaAtividades.appendChild(estadoVazio());
-        return;
+    // Atividades com o prazo vencido somem sozinhas (a partir do dia seguinte).
+    const visiveis = atividades.filter((a) => diasAte(a.prazo) >= 0).sort(porPrazo);
+    const vencidas = atividades.filter((a) => diasAte(a.prazo) < 0);
+
+    atualizarFiltros(visiveis);
+
+    const mostradas = filtroMateria === 0
+        ? visiveis
+        : visiveis.filter((a) => Number(a.materiaId) === filtroMateria);
+
+    if (mostradas.length === 0) {
+        listaAtividades.appendChild(estadoVazio(
+            'Nada pendente',
+            ehAdmin
+                ? 'Toque em "+" para publicar a primeira atividade.'
+                : 'Quando houver atividades, elas aparecem aqui.'
+        ));
+    } else {
+        const animar = !jaDesenhou;
+        mostradas.forEach((ativ, i) => listaAtividades.appendChild(criarPost(ativ, i, animar)));
+        jaDesenhou = true;
     }
 
-    const animar = !jaDesenhou;
-    let indice = 0;
-
-    GRUPOS.forEach(grupo => {
-        const itens = atividades.filter(a => grupo.testa(diasAte(a.prazo)));
-        if (itens.length === 0) return;
-
-        const secao = criar('section', `grupo grupo-${grupo.chave}`);
-        const cabecalho = criar('div', 'grupo-cab');
-        cabecalho.appendChild(criar('h2', '', grupo.titulo));
-        cabecalho.appendChild(criar('span', 'contagem', String(itens.length)));
-        secao.appendChild(cabecalho);
-
-        itens.forEach(ativ => secao.appendChild(criarCartao(ativ, indice++, animar)));
-        listaAtividades.appendChild(secao);
-    });
-
-    jaDesenhou = true;
+    // Só o admin vê o aviso para limpar do banco as vencidas (que já estão ocultas para todos).
+    if (ehAdmin && vencidas.length > 0) {
+        const caixa = criar('div', 'limpeza');
+        caixa.appendChild(criar('p', '',
+            `${vencidas.length} atividade${vencidas.length > 1 ? 's vencidas estão ocultas' : ' vencida está oculta'}.`));
+        const btn = criar('button', 'btn btn-secundario btn-pequeno', 'Apagar do banco');
+        btn.type = 'button';
+        btn.addEventListener('click', () => apagarVencidas(vencidas));
+        caixa.appendChild(btn);
+        listaAtividades.appendChild(caixa);
+    }
 }
 
 async function deletarAtividade(id) {
@@ -448,6 +494,37 @@ async function deletarAtividade(id) {
         alert("Erro ao excluir. Você está logado como administrador?");
     }
 }
+
+async function apagarVencidas(lista) {
+    if (!confirm(`Apagar ${lista.length} atividade(s) vencida(s) do banco? Isso não pode ser desfeito.`)) return;
+    try {
+        await Promise.all(lista.map((a) => deleteDoc(doc(db, "atividades", a.id))));
+    } catch (erro) {
+        console.error("Erro ao apagar vencidas: ", erro);
+        alert("Não foi possível apagar todas. Tente de novo.");
+    }
+}
+
+// Quando vira o dia (ou o app volta para a tela), o que venceu desaparece.
+function agendarViradaDoDia() {
+    const agora = new Date();
+    const proxima = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1, 0, 0, 5);
+    setTimeout(() => {
+        if (logado) renderizarAtividades();
+        agendarViradaDoDia();
+    }, proxima - agora);
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && logado) renderizarAtividades();
+});
+
+agendarViradaDoDia();
+
+// O nome e a foto do admin vêm do perfil; quando o perfil carrega ou muda, redesenha.
+aoMudarPerfis(() => {
+    if (logado && atividades.length > 0) renderizarAtividades();
+});
 
 // ============================================================
 // IMAGEM: reduz e comprime antes de salvar
@@ -509,7 +586,11 @@ form.addEventListener('submit', async (e) => {
             if (imagem) dados.imagem = imagem;
             await updateDoc(doc(db, "atividades", editandoId), dados);
         } else {
-            await addDoc(collection(db, "atividades"), { ...dados, imagem: imagem });
+            await addDoc(collection(db, "atividades"), {
+                ...dados,
+                imagem: imagem,
+                criadoEm: serverTimestamp()
+            });
         }
 
         fecharModal();
@@ -525,12 +606,6 @@ form.addEventListener('submit', async (e) => {
 // ============================================================
 // QUEM ESTÁ LOGADO DECIDE O QUE APARECE
 // ============================================================
-function mostrarUsuario(nome, admin) {
-    spanUsuario.replaceChildren(criar('span', 'usuario-nome', nome));
-    if (admin) spanUsuario.appendChild(criar('span', 'selo-admin', 'admin'));
-    spanUsuario.hidden = false;
-}
-
 onAuthStateChanged(auth, (user) => {
     if (cancelarEscuta) {
         cancelarEscuta();
@@ -539,13 +614,16 @@ onAuthStateChanged(auth, (user) => {
 
     if (!user) {
         // Deslogado: esconde tudo e mostra o login.
+        logado = false;
         ehAdmin = false;
         atividades = [];
         jaDesenhou = false;
+        filtroMateria = 0;
         limparCache();
         listaAtividades.replaceChildren();
+        filtros.replaceChildren();
+        filtros.hidden = true;
         areaApp.hidden = true;
-        spanUsuario.hidden = true;
         btnSair.hidden = true;
         btnNova.hidden = true;
         telaLogin.hidden = false;
@@ -553,6 +631,7 @@ onAuthStateChanged(auth, (user) => {
         return;
     }
 
+    logado = true;
     ehAdmin = user.uid === ADMIN_UID;
     if (ADMIN_UID === "COLE_AQUI_O_UID_DO_ADMIN") {
         console.warn("Cole o UID do admin no arquivo config-admin.js.");
@@ -562,7 +641,6 @@ onAuthStateChanged(auth, (user) => {
     areaApp.hidden = false;
     btnSair.hidden = false;
     btnNova.hidden = !ehAdmin;
-    mostrarUsuario(user.email.split('@')[0], ehAdmin);
 
     // Mostra o cache na hora (sem animar) e depois o Firebase atualiza em tempo real.
     atividades = lerCache();

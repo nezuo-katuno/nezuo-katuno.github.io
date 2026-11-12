@@ -6,7 +6,7 @@
 //  - Dados (Firestore) e login (Authentication) NÃO passam por aqui: o Firebase cuida deles.
 //
 // Se um dia o app parecer "preso" numa versão antiga, aumente o número abaixo (v1 -> v2).
-const VERSAO = 'agenda-v2';
+const VERSAO = 'agenda-v3';
 
 const ARQUIVOS_BASE = [
   './',
@@ -14,6 +14,7 @@ const ARQUIVOS_BASE = [
   'style.css',
   'app.js',
   'social.js',
+  'util.js',
   'firebase-config.js',
   'config-admin.js',
   'manifest.json',

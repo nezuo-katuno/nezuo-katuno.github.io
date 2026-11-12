@@ -38,6 +38,9 @@
         <symbol id="i-chat" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
         <symbol id="i-enviar" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
         <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+        <symbol id="i-pessoas" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+        <symbol id="i-feito" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+        <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
     </svg>
 
     <header class="barra">
@@ -46,7 +49,6 @@
             <h1>Agenda Escolar</h1>
         </div>
         <div class="barra-acoes">
-            <span id="usuario-logado" class="usuario-logado" hidden></span>
             <button id="btn-perfil-cabecalho" class="avatar-btn" type="button" aria-label="Meu perfil" hidden></button>
             <button id="btn-tema" class="btn-icone" type="button" aria-label="Usar tema escuro" title="Alternar tema">
                 <svg class="icone"><use href="#i-lua"/></svg>
@@ -55,6 +57,8 @@
                 <svg class="icone"><use href="#i-sair"/></svg>
             </button>
         </div>
+        <!-- Filtro por matéria (aparece só na aba Agenda) -->
+        <div id="filtros-agenda" class="filtros" role="group" aria-label="Filtrar por matéria" hidden></div>
     </header>
 
     <!-- Tela de login / criar conta -->
@@ -83,6 +87,7 @@
         </div>
     </section>
 
+    <!-- Agenda (feed de atividades) -->
     <main id="area-app" hidden>
         <section id="lista-atividades" class="lista" aria-live="polite">
             <!-- As atividades aparecerão aqui via JavaScript -->
@@ -100,34 +105,68 @@
         </form>
     </section>
 
-    <!-- Perfil -->
+    <!-- Pessoas e pedidos de amizade -->
+    <section id="area-pessoas" class="area-pessoas" hidden>
+        <label class="busca" for="busca-pessoas">
+            <svg class="icone"><use href="#i-busca"/></svg>
+            <input type="search" id="busca-pessoas" placeholder="Buscar por nome ou @usuário" autocomplete="off">
+        </label>
+        <div id="lista-pessoas"></div>
+    </section>
+
+    <!-- Meu perfil -->
     <section id="area-perfil" class="area-perfil" hidden>
-        <div class="perfil-cartao">
-            <div class="perfil-foto">
-                <span id="perfil-avatar"></span>
-                <button type="button" id="btn-trocar-foto" class="btn-foto" aria-label="Trocar foto">
+        <div class="pf-cartao">
+            <div id="perfil-banner" class="pf-banner">
+                <button type="button" id="btn-trocar-banner" class="btn-banner" aria-label="Trocar banner">
                     <svg class="icone"><use href="#i-camera"/></svg>
                 </button>
-                <input type="file" id="input-foto" accept="image/*" hidden>
+                <input type="file" id="input-banner" accept="image/*" hidden>
             </div>
-            <p id="perfil-usuario" class="perfil-usuario"></p>
-
-            <form id="form-perfil">
-                <label for="perfil-nome">Nome de exibição</label>
-                <input type="text" id="perfil-nome" maxlength="30" required>
-                <small class="login-dica">É o nome que aparece no chat. Seu @usuário não muda, porque é o seu login.</small>
-
-                <button type="button" id="btn-remover-foto" class="btn btn-secundario btn-bloco" hidden>Remover foto</button>
-
-                <p id="perfil-msg" class="login-msg" role="status"></p>
-                <button type="submit" id="btn-salvar-perfil" class="btn btn-primario btn-bloco">Salvar perfil</button>
-            </form>
-
-            <button type="button" id="btn-sair-perfil" class="btn btn-secundario btn-bloco">
-                <svg class="icone"><use href="#i-sair"/></svg>
-                Sair da conta
-            </button>
+            <div class="pf-topo">
+                <div class="perfil-foto">
+                    <span id="perfil-avatar" class="pf-avatar"></span>
+                    <button type="button" id="btn-trocar-foto" class="btn-foto" aria-label="Trocar foto">
+                        <svg class="icone"><use href="#i-camera"/></svg>
+                    </button>
+                    <input type="file" id="input-foto" accept="image/*" hidden>
+                </div>
+            </div>
+            <div class="pf-info">
+                <h2 id="perfil-nome-previa" class="pf-nome"></h2>
+                <p id="perfil-usuario" class="pf-usuario"></p>
+                <p id="perfil-bio-previa" class="pf-bio" hidden></p>
+                <div id="perfil-chips" class="pf-chips" hidden></div>
+            </div>
         </div>
+
+        <form id="form-perfil" class="pf-form">
+            <label for="perfil-nome">Nome de exibição</label>
+            <input type="text" id="perfil-nome" maxlength="30" required>
+            <small class="login-dica">Aparece no chat e no seu perfil. Seu @usuário não muda, porque é o seu login.</small>
+
+            <label for="perfil-bio">Biografia</label>
+            <textarea id="perfil-bio" rows="3" maxlength="160" placeholder="Conte um pouco sobre você"></textarea>
+            <small id="bio-contador" class="contador">0/160</small>
+
+            <label for="perfil-materia">Matéria favorita</label>
+            <select id="perfil-materia"></select>
+
+            <label id="rotulo-cor">Cor do perfil</label>
+            <div id="paleta-cores" class="paleta" role="group" aria-labelledby="rotulo-cor"></div>
+            <small class="login-dica">Aparece no banner quando você não tem uma imagem.</small>
+
+            <button type="button" id="btn-remover-foto" class="btn btn-secundario btn-bloco" hidden>Remover foto</button>
+            <button type="button" id="btn-remover-banner" class="btn btn-secundario btn-bloco" hidden>Remover banner</button>
+
+            <p id="perfil-msg" class="login-msg" role="status"></p>
+            <button type="submit" id="btn-salvar-perfil" class="btn btn-primario btn-bloco">Salvar perfil</button>
+        </form>
+
+        <button type="button" id="btn-sair-perfil" class="btn btn-secundario btn-bloco">
+            <svg class="icone"><use href="#i-sair"/></svg>
+            Sair da conta
+        </button>
     </section>
 
     <!-- Barra de abas -->
@@ -143,6 +182,13 @@
                     <span id="badge-chat" class="badge" hidden></span>
                 </span>
                 <span>Chat</span>
+            </button>
+            <button type="button" class="aba" data-aba="pessoas">
+                <span class="aba-icone">
+                    <svg class="icone"><use href="#i-pessoas"/></svg>
+                    <span id="badge-pessoas" class="badge" hidden></span>
+                </span>
+                <span>Pessoas</span>
             </button>
             <button type="button" class="aba" data-aba="perfil">
                 <span class="aba-icone"><svg class="icone"><use href="#i-usuario"/></svg></span>
@@ -184,6 +230,16 @@
 
                 <button type="submit" class="btn btn-primario btn-salvar btn-bloco">Salvar Atividade</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Perfil de outra pessoa (folha que sobe de baixo) -->
+    <div id="sheet-perfil" class="modal oculto">
+        <div class="modal-conteudo sheet-perfil" role="dialog" aria-modal="true" aria-label="Perfil">
+            <button type="button" id="sheet-fechar" class="sheet-fechar btn-icone" aria-label="Fechar perfil">
+                <svg class="icone"><use href="#i-x"/></svg>
+            </button>
+            <div id="sheet-conteudo"></div>
         </div>
     </div>
 
